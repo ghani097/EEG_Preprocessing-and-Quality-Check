@@ -1,0 +1,116 @@
+#install ASR artifact rejection
+!pip install asrpy -q
+
+#importing all requirements
+
+import mne
+from mne.datasets import ssvep
+from asrpy import ASR
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import os
+%matplotlib inline
+from mne_icalabel import label_components
+from mne.preprocessing import ICA
+from mne import export
+from scipy.stats import linregress
+
+
+# Defining the path where the data is secured
+
+path = r'ADD YOUR PATH' # use your path
+all_files = glob.glob(os.path.join(path, "*.set")) 
+output_folder = 'processed'
+os.makedirs(output_folder, exist_ok=True)  # Create folder if it doesn't exist
+
+
+# Function to contain all the code which runs all preprocessing steps and then call PSD function for the quality check
+
+
+
+for filename in all_files:
+    raw = mne.io.read_raw_eeglab(filename, preload=True)
+    print(filename)
+    
+    # Select EEG channels
+    picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False, eog=False)
+    raw.pick(picks)
+
+    # Set EEG reference and apply filters
+    raw.set_eeg_reference("average")
+    raw.filter(l_freq=1., h_freq=100.)
+    raw.notch_filter(freqs=[60])  # Bandstop for power grid
+
+    # Make a copy of uncleaned data
+    raw_uncleaned = raw.copy()
+
+    # Apply ASR
+    asr = ASR(sfreq=raw.info["sfreq"], cutoff=15)
+    asr.fit(raw)
+    CleanData = asr.transform(raw)
+
+    # Initialize and fit ICA with extended infomax
+    ica = ICA(method='infomax', fit_params=dict(extended=True), random_state=97)
+    ica.fit(CleanData)
+
+    # Label components and exclude those with brain label and proba <= 0.8
+    IC_COMP = label_components(CleanData, ica, method='iclabel')
+    indices = [i for i, (proba, label) in enumerate(zip(IC_COMP['y_pred_proba'], IC_COMP['labels']))
+               if label == 'brain' and proba <= 0.8]
+    ica.exclude.extend(indices)
+
+    # Apply ICA to CleanData
+    CleanData = ica.apply(CleanData)
+
+    # Generate a unique output filename based on the original filename
+    base_name = os.path.splitext(os.path.basename(filename))[0]  # Get base name without extension
+    output_filename = os.path.join(output_folder, f"{base_name}_processed.set")
+
+    # Save each processed file to the "processed" folder
+    export.export_raw(output_filename, CleanData, fmt='eeglab', overwrite=True)
+    print(f"Saved: {output_filename}")
+
+PSD_CHECK()
+
+
+#Quality check function on the processed data 
+
+# Define the folder where processed files are saved
+def PSD_CHECK():
+ processed_folder = 'processed'
+
+  # Get a list of all .set files in the processed folder
+ processed_files = [os.path.join(processed_folder, f) for f in os.listdir(processed_folder) if f.endswith('.set')]
+
+ # Loop through each processed file and calculate the PSD
+ for processed_file in processed_files:
+    # Read the processed .set file
+    raw = mne.io.read_raw_eeglab(processed_file, preload=True)
+    print(f"Calculating PSD for {processed_file}")
+    psd_data = raw.compute_psd(fmin=1, fmax=80)
+    psd, freqs = psd_data.get_data(return_freqs=True)
+    # Plot the PSD similar to MNE's style
+    # Convert PSD to dB scale
+    psd_db = 10 * np.log10(psd.mean(axis=0))  # Mean across channels
+
+    # Choose the frequency range to fit (e.g., from 1 Hz to 80 Hz)
+    freq_range = (freqs >= 1) & (freqs <= 80)  # Boolean mask for selected frequencies
+    freqs_selected = freqs[freq_range]
+    psd_db_selected = psd_db[freq_range]
+
+    # Fit a linear regression line to the selected frequency range
+    slope, intercept, r_value, p_value, std_err = linregress(freqs_selected, psd_db_selected)
+    # Data quality assessment based on slope
+    if slope >= 0:
+     quality = "Garbage"
+    elif 0 > slope >= -0.1:
+     quality = "Poor"
+    elif -0.1 > slope >= -0.2:
+     quality = "Fair"
+    elif -0.2 > slope >= -0.3:
+     quality = "Good"
+    else:  # slope < -0.3
+     quality = "Excellent"
+
+    print(f"Data Quality: {quality}")
