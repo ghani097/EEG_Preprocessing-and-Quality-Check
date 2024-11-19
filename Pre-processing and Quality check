@@ -19,7 +19,7 @@ from scipy.stats import linregress
 
 # Defining the path where the data is secured
 
-path = r'ADD YOUR PATH' # use your path
+path = r'C:\Users\PC1\Documents\MATLAB' # use your path
 all_files = glob.glob(os.path.join(path, "*.set")) 
 output_folder = 'processed'
 os.makedirs(output_folder, exist_ok=True)  # Create folder if it doesn't exist
