@@ -1,5 +1,5 @@
 #install ASR artifact rejection
-!pip install asrpy -q
+#!pip install asrpy -q
 
 #importing all requirements
 
@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import os
-%matplotlib inline
+#%matplotlib inline
 from mne_icalabel import label_components
 from mne.preprocessing import ICA
 from mne import export
@@ -19,7 +19,7 @@ from scipy.stats import linregress
 
 # Defining the path where the data is secured
 
-path = r'C:\Users\PC1\Documents\MATLAB' # use your path
+path = r'C:\Users\PC1\Documents\MATLAB\test' # use your path
 all_files = glob.glob(os.path.join(path, "*.set")) 
 output_folder = 'processed'
 os.makedirs(output_folder, exist_ok=True)  # Create folder if it doesn't exist
@@ -31,15 +31,19 @@ os.makedirs(output_folder, exist_ok=True)  # Create folder if it doesn't exist
 
 for filename in all_files:
     raw = mne.io.read_raw_eeglab(filename, preload=True)
+    raw2 = mne.io.read_raw_eeglab(filename, preload=True)
+    # Set the EEG montage
+    #montage = mne.channels.make_standard_montage('standard_1020')
+    #raw.set_montage(montage)
+    #raw2.set_montage(montage)
     print(filename)
     
     # Select EEG channels
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False, eog=False)
     raw.pick(picks)
-
     # Set EEG reference and apply filters
     raw.set_eeg_reference("average")
-    raw.filter(l_freq=1., h_freq=100.)
+    raw.filter(l_freq=1., h_freq=80.)
     raw.notch_filter(freqs=[60])  # Bandstop for power grid
 
     # Make a copy of uncleaned data
@@ -49,6 +53,7 @@ for filename in all_files:
     asr = ASR(sfreq=raw.info["sfreq"], cutoff=15)
     asr.fit(raw)
     CleanData = asr.transform(raw)
+
 
     # Initialize and fit ICA with extended infomax
     ica = ICA(method='infomax', fit_params=dict(extended=True), random_state=97)
@@ -71,7 +76,72 @@ for filename in all_files:
     export.export_raw(output_filename, CleanData, fmt='eeglab', overwrite=True)
     print(f"Saved: {output_filename}")
 
-PSD_CHECK()
+
+
+    # Assuming raw2 and CleanData are both MNE Raw objects
+    # Extract the data
+    raw_data = raw2.get_data()        # Shape: (n_channels, n_samples)
+    clean_data = CleanData.get_data()  # Shape: (n_channels, n_samples)
+
+    # Get the times for the x-axis
+    times = raw2.times  # This will be the same for both datasets
+
+    # Define the indices for the slice
+    start_idx = 1
+    end_idx = round(len(times) / 7)
+
+    # Slice the data and times
+    times_slice = times[start_idx:end_idx]
+    raw_data_slice = raw_data[:, start_idx:end_idx]
+    clean_data_slice = clean_data[:, start_idx:end_idx]
+
+    # Create the figure with subplots
+    fig = plt.figure(figsize=(15, 8))
+    gs = fig.add_gridspec(2, 2, height_ratios=[2, 1])
+
+    # Top plot: Data comparison spanning both columns
+    ax1 = fig.add_subplot(gs[0, :])
+    for i in range(raw_data_slice.shape[0]):
+        ax1.plot(times_slice, raw_data_slice[i, :] + i * 100e-6, color='red', linewidth=0.2)
+        ax1.plot(times_slice, clean_data_slice[i, :] + i * 100e-6, color='blue', linewidth=0.2)
+        ax1.set_title("Comparison of Raw and Cleaned Data")
+        ax1.set_xlabel("Time (s)")
+        ax1.set_ylabel("EEG Channels")
+
+    # Bottom left plot: PSD of CleanData
+    ax2 = fig.add_subplot(gs[1, 0])
+    CleanData.plot_psd(fmin=2, fmax=45, average=True, ax=ax2, show=True)
+    ax2.set_title('PSD of Cleaned Data')
+
+    # Bottom right plot: Topographic map
+    ax3 = fig.add_subplot(gs[1, 1])
+    # Compute the PSD for the topographic map
+    fmin = 2.0
+    fmax = 60.0
+    psd = raw2.compute_psd(method='welch', fmin=fmin, fmax=fmax, tmin=0, tmax=None, n_fft=2048)
+
+    # Get the frequencies and PSD data
+    freqs = psd.freqs
+    psds = psd.get_data()
+
+    # Extract power at 10 Hz
+    idx_10hz = np.argmin(np.abs(freqs - 10.0))
+    power_10hz = psds[:, idx_10hz]
+
+    # Get sensor positions
+    pos = mne.find_layout(raw2.info).pos
+
+    # Plot the topographic map
+    im, cn = plot_topomap(power_10hz, pos, axes=ax3, show=False, cmap='Reds')
+    fig.colorbar(im, ax=ax3)
+    ax3.set_title('Power at 10 Hz')
+
+    plt.tight_layout()
+    plt.show()
+
+   # CleanData.plot()
+
+
 
 
 #Quality check function on the processed data 
@@ -91,9 +161,10 @@ def PSD_CHECK():
     psd_data = raw.compute_psd(fmin=1, fmax=80)
     psd, freqs = psd_data.get_data(return_freqs=True)
     # Plot the PSD similar to MNE's style
+    
+    
     # Convert PSD to dB scale
     psd_db = 10 * np.log10(psd.mean(axis=0))  # Mean across channels
-
     # Choose the frequency range to fit (e.g., from 1 Hz to 80 Hz)
     freq_range = (freqs >= 1) & (freqs <= 80)  # Boolean mask for selected frequencies
     freqs_selected = freqs[freq_range]
@@ -114,3 +185,5 @@ def PSD_CHECK():
      quality = "Excellent"
 
     print(f"Data Quality: {quality}")
+
+PSD_CHECK()
