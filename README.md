@@ -33,25 +33,43 @@ Industry-standard EEG quality metrics including:
 - **Overall Quality Score** - Weighted composite score (0-100)
 - **Quality Grade** - Letter grade from F to A+
 
-### 🛠️ Two Preprocessing Methods
+### 🛠️ Two Preprocessing Methods Compared
 
-#### 1️⃣ **Traditional Method**
-Standard EEG preprocessing pipeline used in most research:
-- Channel selection and referencing
+#### 1️⃣ **Traditional Method: ASR + ICA**
+Your original method combining proven techniques:
+- Channel selection and average referencing
 - Bandpass filtering (1-80 Hz)
 - Notch filtering (60 Hz power line)
-- Bad channel detection and interpolation
-- ICA (Independent Component Analysis)
-- Artifact component removal
+- **ASR (Artifact Subspace Reconstruction)** - Removes artifact subspaces
+- **ICA with ICLabel** - Automatic brain vs. artifact component classification
+- Removes: eye blinks, muscle artifacts, heartbeat, line noise
 
-#### 2️⃣ **GEDAI Method** (Advanced)
-State-of-the-art preprocessing with ASR:
-- Channel selection and referencing
+**Strengths:**
+- Well-established method with extensive validation
+- ASR effectively removes high-amplitude artifacts
+- ICLabel provides automatic component classification
+- Fast processing with good results
+
+#### 2️⃣ **GEDAI Method: Eigenvalue-Based** (New!)
+Novel eigenvalue decomposition approach:
+- Channel selection and average referencing
 - Bandpass filtering (1-80 Hz)
 - Notch filtering (60 Hz)
-- **ASR (Artifact Subspace Reconstruction)** - Advanced artifact removal
-- ICA with **ICLabel** - Automatic component classification
-- Brain vs. artifact component separation
+- **GEVD (Generalized Eigenvalue Decomposition)** - Separates signal/noise subspaces
+- **Theoretical signal modeling** - Uses EEG physics knowledge
+- **Automatic thresholding** - No manual component selection needed
+
+**Key Innovation:**
+- Uses theoretical knowledge of brain signals (not blind like ICA/PCA)
+- Computes two covariance matrices (signal vs. noise)
+- Solves: S * v = λ * R * v (generalized eigenvalue problem)
+- Keeps components that match expected brain signal characteristics
+
+**Strengths:**
+- Outperforms ASR/ICA in many scenarios (per recent research)
+- Better preservation of brain signals
+- Automatic separation without training data
+- Novel approach based on EEG generation physics
 
 ### 📊 Before/After Comparison
 - **Visual comparison** of raw vs. cleaned signals
@@ -61,10 +79,11 @@ State-of-the-art preprocessing with ASR:
 
 ### ⚖️ Method Comparison
 When "Both" methods are selected:
-- **Head-to-head comparison** of Traditional vs. GEDAI
-- **Detailed metric-by-metric analysis**
-- **Winner determination** based on quality scores
-- **Improvement percentages** and recommendations
+- **Head-to-head comparison** of ASR+ICA vs. GEDAI
+- **Detailed metric-by-metric analysis** across all quality metrics
+- **Winner determination** based on overall quality scores
+- **Improvement percentages** showing which method cleans better
+- **Recommendation** for which method to use for your specific data
 
 ---
 
@@ -117,9 +136,9 @@ python eeg_quality_gui.py
    - File path will be displayed
 
 2. **Choose Preprocessing Method**
-   - **Traditional**: Standard filtering + ICA
-   - **GEDAI**: ASR + ICA with ICLabel (Recommended)
-   - **Both**: Compare both methods side-by-side
+   - **Traditional**: ASR + ICA + ICLabel (your original method)
+   - **GEDAI**: Eigenvalue-based denoising (new method to test)
+   - **Both**: Compare both methods side-by-side (Recommended!)
 
 3. **Start Processing**
    - Click "🚀 Start Processing" button
@@ -244,6 +263,61 @@ EEG_Preprocessing-and-Quality-Check/
 
 ---
 
+## 🆚 Method Comparison: ASR+ICA vs. GEDAI
+
+### Key Differences
+
+| Aspect | Traditional (ASR + ICA) | GEDAI (Eigenvalue-Based) |
+|--------|------------------------|--------------------------|
+| **Approach** | Blind source separation | Theory-guided decomposition |
+| **Core Algorithm** | ASR + Independent Component Analysis | Generalized Eigenvalue Decomposition |
+| **Prior Knowledge** | None (data-driven) | Uses EEG physics & signal characteristics |
+| **Component Selection** | ICLabel classification (trained model) | Eigenvalue spectrum analysis (automatic) |
+| **Artifact Removal** | Removes entire ICA components | Removes artifact subspace |
+| **Processing Speed** | Moderate (ICA can be slow) | Fast (matrix decomposition) |
+| **Validation** | Extensively validated in literature | Newer method, emerging validation |
+| **Best For** | High-amplitude artifacts, eye blinks | Preserving subtle brain signals |
+
+### When to Use Each Method
+
+#### Use **Traditional (ASR + ICA)** when:
+- You have well-characterized artifact types (eye blinks, muscle)
+- Fast processing is important
+- You want extensively validated methods
+- High-amplitude artifacts are the main concern
+- You need component-by-component interpretability
+
+#### Use **GEDAI** when:
+- You want better brain signal preservation
+- Subtle neural signals are important
+- You have complex artifact patterns
+- You want automatic threshold selection
+- You're exploring novel preprocessing approaches
+
+#### Use **Both** to:
+- Determine which method works better for your specific data
+- Validate results across methods
+- Understand trade-offs for your use case
+- Make data-driven preprocessing decisions
+
+### What the Research Shows
+
+Recent studies indicate that GEDAI:
+- Globally outperforms ASR and ICA in ground-truth simulations
+- Better handles EOG, EMG, and noise contamination
+- Preserves brain signals more effectively
+- Works well in challenging artifact scenarios
+
+However, ASR + ICA remains:
+- Well-established with years of validation
+- Highly effective for standard artifact types
+- Widely used and trusted in the community
+- Easier to interpret and troubleshoot
+
+**Recommendation:** Run both methods and let the quality metrics guide your decision!
+
+---
+
 ## 🎯 Quality Metrics Technical Details
 
 ### Calculation Methods
@@ -313,19 +387,30 @@ sudo apt-get install python3-pyqt5
 
 ### Methods and Algorithms
 
-1. **ASR (Artifact Subspace Reconstruction)**
+1. **GEDAI (Generalized Eigenvalue Decomposition for Artifact Identification)**
+   - GitHub Repository: [neurotuning/GEDAI-master](https://github.com/neurotuning/GEDAI-master)
+   - Recent Publication: bioRxiv 2025.10.04.680449 - "Return of the GEDAI: Unsupervised EEG Denoising based on Leadfield Filtering"
+   - Method: Uses theoretical knowledge of brain signal subspace with GEVD to separate artifacts
+
+2. **Generalized Eigenvalue Decomposition (GED) Tutorial**
+   - Cohen, M. X. (2021). A tutorial on generalized eigendecomposition for denoising, contrast enhancement, and dimension reduction in multichannel electrophysiology. NeuroImage.
+   - arXiv: [2104.12356](https://arxiv.org/abs/2104.12356)
+
+3. **ASR (Artifact Subspace Reconstruction)**
    - Mullen, T. R., et al. (2015). Real-time neuroimaging and cognitive monitoring using wearable dry EEG. IEEE Transactions on Biomedical Engineering.
+   - Implementation: [asrpy](https://github.com/DiGyt/asrpy)
 
-2. **ICLabel**
+4. **ICLabel**
    - Pion-Tonachini, L., et al. (2019). ICLabel: An automated electroencephalographic independent component classifier, dataset, and website. NeuroImage.
+   - Implementation: [mne-icalabel](https://github.com/mne-tools/mne-icalabel)
 
-3. **MNE-Python**
+5. **MNE-Python**
    - Gramfort, A., et al. (2013). MEG and EEG data analysis with MNE-Python. Frontiers in Neuroscience.
 
-4. **ICA (Independent Component Analysis)**
+6. **ICA (Independent Component Analysis)**
    - Makeig, S., et al. (1996). Independent component analysis of electroencephalographic data. Advances in Neural Information Processing Systems.
 
-5. **Power Spectral Density Analysis**
+7. **Power Spectral Density Analysis**
    - Welch, P. (1967). The use of fast Fourier transform for the estimation of power spectra. IEEE Transactions on Audio and Electroacoustics.
 
 ---

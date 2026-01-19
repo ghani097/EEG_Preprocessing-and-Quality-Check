@@ -519,7 +519,7 @@ class EEGQualityCheckGUI(QMainWindow):
         title.setObjectName("header")
         title.setAlignment(Qt.AlignCenter)
 
-        subtitle = QLabel("Professional Edition - Compare Traditional & GEDAI Methods")
+        subtitle = QLabel("Compare Your ASR+ICA Method with New GEDAI Eigenvalue-Based Method")
         subtitle.setObjectName("subheader")
         subtitle.setAlignment(Qt.AlignCenter)
 
@@ -556,20 +556,20 @@ class EEGQualityCheckGUI(QMainWindow):
 
         self.method_group = QButtonGroup()
 
-        # Traditional method
-        self.trad_radio = QRadioButton("Traditional (Filtering + ICA)")
-        self.trad_radio.setToolTip("Standard preprocessing: Filtering, bad channel detection, and ICA")
+        # Traditional method (ASR + ICA)
+        self.trad_radio = QRadioButton("Traditional: ASR + ICA + ICLabel")
+        self.trad_radio.setToolTip("Your original method: ASR artifact removal + ICA with ICLabel classification")
         self.method_group.addButton(self.trad_radio, 0)
 
-        # GEDAI method
-        self.gedai_radio = QRadioButton("GEDAI (ASR + ICA with ICLabel)")
-        self.gedai_radio.setToolTip("Advanced preprocessing: ASR artifact removal + ICA with automatic labeling")
+        # GEDAI method (Eigenvalue-based)
+        self.gedai_radio = QRadioButton("GEDAI: Eigenvalue-Based Denoising")
+        self.gedai_radio.setToolTip("New method: Generalized Eigenvalue Decomposition for artifact identification")
         self.gedai_radio.setChecked(True)
         self.method_group.addButton(self.gedai_radio, 1)
 
         # Both methods
-        self.both_radio = QRadioButton("Both (Compare Methods)")
-        self.both_radio.setToolTip("Run both methods and compare results")
+        self.both_radio = QRadioButton("Both (Compare ASR+ICA vs GEDAI)")
+        self.both_radio.setToolTip("Run both methods and see which performs better on your data")
         self.method_group.addButton(self.both_radio, 2)
 
         layout.addWidget(self.trad_radio)
@@ -578,9 +578,9 @@ class EEGQualityCheckGUI(QMainWindow):
 
         # Add descriptions
         desc_label = QLabel(
-            "<b>Traditional:</b> Standard pipeline used in most EEG research<br>"
-            "<b>GEDAI:</b> Advanced artifact removal using ASR (Artifact Subspace Reconstruction)<br>"
-            "<b>Both:</b> Compare both methods side-by-side to determine which works better for your data"
+            "<b>Traditional (ASR + ICA):</b> Your original method - uses ASR for artifact subspace reconstruction + ICA with ICLabel<br>"
+            "<b>GEDAI:</b> New eigenvalue-based method - uses theoretical EEG signal characteristics with GEVD<br>"
+            "<b>Both:</b> Compare both methods to see which removes artifacts better while preserving brain signals"
         )
         desc_label.setStyleSheet("color: #555; font-size: 11px; padding: 10px;")
         desc_label.setWordWrap(True)
