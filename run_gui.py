@@ -23,9 +23,9 @@ def check_dependencies():
     missing = []
 
     try:
-        import PyQt5
+        import PyQt6
     except ImportError:
-        missing.append("PyQt5")
+        missing.append("PyQt6")
 
     try:
         import mne

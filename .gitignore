@@ -1,1 +1,6 @@
 Testing/
+__pycache__/
+*.pyc
+*.pyo
+test_*.py
+.pytest_cache/
