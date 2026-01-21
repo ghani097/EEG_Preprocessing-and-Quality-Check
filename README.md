@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-green.svg)
+![PyQt6](https://img.shields.io/badge/PyQt6-6.4+-green.svg)
 ![MNE](https://img.shields.io/badge/MNE-Latest-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -16,7 +16,9 @@
 ## 🌟 Features
 
 ### ✨ Modern GUI Interface
-- **Intuitive PyQt5-based interface** with professional styling
+- **Intuitive PyQt6-based interface** with modern, professional styling
+- **Gradient color schemes** and smooth rounded corners
+- **Enhanced visual feedback** with shadows and hover effects
 - **Real-time progress tracking** with detailed status updates
 - **Interactive visualizations** with matplotlib integration
 - **Tabbed results display** for easy navigation
