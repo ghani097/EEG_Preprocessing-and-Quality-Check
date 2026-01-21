@@ -1,7 +1,7 @@
 """
 EEG Quality Check GUI
 =====================
-Modern PyQt5-based GUI for EEG preprocessing and quality assessment.
+Modern PyQt6-based GUI for EEG preprocessing and quality assessment.
 
 Features:
 - Multiple preprocessing methods (Traditional, GEDAI, Both)
@@ -14,19 +14,19 @@ Features:
 
 import sys
 import os
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QFileDialog, QRadioButton, QButtonGroup,
     QProgressBar, QTextEdit, QTabWidget, QGroupBox, QScrollArea,
     QGridLayout, QMessageBox, QSplitter, QFrame
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont, QColor, QPalette, QIcon
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtGui import QFont, QColor, QPalette, QIcon
 
 import numpy as np
 import matplotlib
-matplotlib.use('Qt5Agg')
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+matplotlib.use('QtAgg')
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
@@ -102,7 +102,7 @@ class MetricsWidget(QWidget):
 
         # Title
         title = QLabel("Quality Metrics")
-        title.setFont(QFont("Arial", 14, QFont.Bold))
+        title.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         layout.addWidget(title)
 
         # Metrics display area
@@ -132,7 +132,7 @@ class ComparisonWidget(QWidget):
 
         # Title
         title = QLabel("Method Comparison")
-        title.setFont(QFont("Arial", 14, QFont.Bold))
+        title.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         layout.addWidget(title)
 
         # Comparison display
@@ -425,88 +425,121 @@ class EEGQualityCheckGUI(QMainWindow):
         """Set modern stylesheet."""
         self.setStyleSheet("""
             QMainWindow {
-                background-color: #f0f0f0;
+                background-color: #f5f7fa;
             }
             QPushButton {
-                background-color: #4CAF50;
+                background-color: #5c6bc0;
                 color: white;
                 border: none;
-                padding: 10px 20px;
+                padding: 12px 24px;
                 text-align: center;
                 font-size: 14px;
-                border-radius: 5px;
+                font-weight: 600;
+                border-radius: 8px;
                 min-width: 120px;
             }
             QPushButton:hover {
-                background-color: #45a049;
+                background-color: #3949ab;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
             QPushButton:disabled {
-                background-color: #cccccc;
-                color: #666666;
+                background-color: #e0e0e0;
+                color: #9e9e9e;
             }
             QGroupBox {
-                font-weight: bold;
-                border: 2px solid #cccccc;
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
+                font-weight: 600;
+                font-size: 13px;
+                border: 2px solid #e0e0e0;
+                border-radius: 10px;
+                margin-top: 12px;
+                padding-top: 15px;
                 background-color: white;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
+                left: 15px;
+                padding: 0 8px;
+                color: #424242;
             }
             QRadioButton {
-                font-size: 12px;
-                spacing: 5px;
-            }
-            QRadioButton::indicator {
-                width: 18px;
-                height: 18px;
-            }
-            QLabel#header {
-                font-size: 24px;
-                font-weight: bold;
-                color: #2c3e50;
-                padding: 10px;
-            }
-            QLabel#subheader {
-                font-size: 14px;
-                color: #7f8c8d;
+                font-size: 13px;
+                spacing: 8px;
                 padding: 5px;
             }
+            QRadioButton::indicator {
+                width: 20px;
+                height: 20px;
+                border-radius: 10px;
+                border: 2px solid #9e9e9e;
+            }
+            QRadioButton::indicator:checked {
+                background-color: #5c6bc0;
+                border: 2px solid #5c6bc0;
+            }
+            QRadioButton::indicator:hover {
+                border: 2px solid #5c6bc0;
+            }
+            QLabel#header {
+                font-size: 28px;
+                font-weight: bold;
+                color: #1a237e;
+                padding: 15px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #5c6bc0, stop:1 #7e57c2);
+                color: white;
+                border-radius: 10px;
+            }
+            QLabel#subheader {
+                font-size: 15px;
+                color: #616161;
+                padding: 8px;
+                font-weight: 500;
+            }
             QProgressBar {
-                border: 2px solid #cccccc;
-                border-radius: 5px;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
                 text-align: center;
-                height: 25px;
+                height: 30px;
+                background-color: #f5f5f5;
+                font-weight: 600;
             }
             QProgressBar::chunk {
-                background-color: #4CAF50;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #5c6bc0, stop:1 #7e57c2);
+                border-radius: 6px;
             }
             QTextEdit {
                 background-color: #ffffff;
-                border: 1px solid #cccccc;
-                border-radius: 5px;
-                font-family: 'Courier New';
-                padding: 5px;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                font-family: 'Courier New', monospace;
+                padding: 8px;
+                selection-background-color: #5c6bc0;
             }
             QTabWidget::pane {
-                border: 1px solid #cccccc;
+                border: 1px solid #e0e0e0;
                 background-color: white;
-                border-radius: 5px;
+                border-radius: 10px;
+                margin-top: -1px;
             }
             QTabBar::tab {
-                background-color: #e0e0e0;
-                padding: 10px 20px;
-                margin-right: 2px;
-                border-top-left-radius: 5px;
-                border-top-right-radius: 5px;
+                background-color: #f5f7fa;
+                color: #616161;
+                padding: 12px 24px;
+                margin-right: 4px;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+                font-weight: 600;
+                font-size: 13px;
             }
             QTabBar::tab:selected {
-                background-color: #4CAF50;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #5c6bc0, stop:1 #3949ab);
                 color: white;
+            }
+            QTabBar::tab:hover:!selected {
+                background-color: #e8eaf6;
             }
         """)
 
@@ -599,11 +632,15 @@ class EEGQualityCheckGUI(QMainWindow):
         self.process_btn.setStyleSheet("""
             QPushButton {
                 font-size: 16px;
-                padding: 15px 30px;
-                background-color: #2196F3;
+                padding: 18px 40px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #42a5f5, stop:1 #1e88e5);
+                font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #1976D2;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #1e88e5, stop:1 #1565c0);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
             }
         """)
         self.process_btn.clicked.connect(self.start_processing)
@@ -807,7 +844,7 @@ def main():
     gui = EEGQualityCheckGUI()
     gui.show()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':
