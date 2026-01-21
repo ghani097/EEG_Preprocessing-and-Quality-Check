@@ -1,0 +1,35 @@
+# EEG Quality Check GUI - Python Dependencies
+# ============================================
+
+# Core EEG Processing
+mne>=1.5.0
+mne-icalabel>=0.4.0
+
+# ASR for artifact removal (GEDAI method)
+asrpy>=0.0.4
+
+# Scientific Computing
+numpy>=1.21.0
+scipy>=1.7.0
+
+# GUI Framework
+PyQt5>=5.15.0
+PyQt5-sip>=12.0.0
+
+# Visualization
+matplotlib>=3.5.0
+
+# Optional but recommended
+# -----------------------
+# For better performance
+numba>=0.56.0
+
+# For reading different EEG file formats
+pyedflib>=0.1.30
+pybv>=0.7.0
+
+# For better interpolation
+scikit-learn>=1.0.0
+
+# For parallel processing (optional)
+joblib>=1.1.0
